@@ -11,20 +11,34 @@ from torch.optim import lr_scheduler
 import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
-from dataset import LoadDataset
 from tensorboardX import SummaryWriter
 import argparse
 from tqdm import tqdm
+from efficientnet_pytorch import EfficientNet
+
+from dataset import LoadDataset
+
+
 
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--data_path', required=True, type=str)
 parser.add_argument('--pretrained', action='store_false', default=True)
-# parser.add_argument('--load', default='', type=str)
+parser.add_argument('--load', default='', type=str)
 parser.add_argument('--name', default='', type=str)
 
 params = parser.parse_args()
+
+
+# class Params():
+#     def __init__(self):
+#         self.data_path = '22-06'
+#         self.name = '22-06-aug'
+#         self.pretrained = True
+#         self.load = 'ckpt/22-06-aug/model_epoch4'
+#         self.start = 5
+
+# params = Params()
 
 data_dir = params.data_path
 
@@ -33,7 +47,7 @@ if params.name == '':
     if params.name == '':
         params.name = data_dir.split('/')[-2]
 
-dataloaders = {x: LoadDataset(x, data_dir, batch_size=32) for x in ['train', 'val']}
+dataloaders = {x: LoadDataset(x, data_dir, batch_size=6) for x in ['train', 'val']}
 
 os.makedirs(os.path.join('log', params.name), exist_ok=True)
 logger = SummaryWriter(os.path.join('log', params.name))
@@ -92,6 +106,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
                 ds_len += len(preds)
+
             if phase == 'train':
                 scheduler.step()
 
@@ -106,7 +121,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-                torch.save(model, os.path.join(ckpt_dir, f'model_epoch{epoch}'))
+                torch.save(model, os.path.join(ckpt_dir, f'model_epoch{epoch}_{best_acc}'))
 
 
         print()
@@ -126,13 +141,20 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 #     model_ft = torch.load(params.load)
 
 print(params.pretrained)
+# print(params.load)
 
-model_ft = models.resnet101(pretrained=params.pretrained)
+# if params.load == '':
+# model_ft = models.resnet101(pretrained=params.pretrained)
+model_ft = EfficientNet.from_pretrained('efficientnet-b5', num_classes=42) 
 
-num_ftrs = model_ft.fc.in_features
+# model_ft = models.resnet101(pretrained=params.pretrained)
+# else:
+#     model_ft = torch.load(params.load)
+
+# num_ftrs = model_ft.fc.in_features
 # Here the size of each output sample is set to 42.
 # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
-model_ft.fc = nn.Linear(num_ftrs, 42)
+# model_ft.fc = nn.Linear(num_ftrs, 42)
 
 model_ft = model_ft.to(device)
 

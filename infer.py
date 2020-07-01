@@ -1,23 +1,26 @@
 import numpy as np
 import pandas as pd
 import torch
-from torchvision import models
+from torchvision import transforms, models
 from tqdm import tqdm 
 
 from dataset import LoadDataset
-from utils import load_image
+from utils import load_image, Normaliztion
 
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu') 
+#device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu') 
+
+device = torch.device('cpu')
+
+#model_path = 'ckpt/22-06/model_epoch17'
+model_path = 'ckpt/22-06-aug/model_epoch24_0.777'
 
 if device.type == 'cpu':
-    model = torch.load('ckpt/mask-hsv/model_epoch0',map_location='cpu')
+    model = torch.load(model_path, map_location='cpu')
 else:
-    model_path = 'ckpt/22-06/model_epoch17'
-    # model = torch.load('ckpt/movement/model_epoch4')
-    # model = torch.load('ckpt/no-movement/model_epoch5')
     model = torch.load(model_path)
 
+transform = transforms.Compose([Normaliztion()])
 
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
@@ -32,19 +35,20 @@ def predict(X):
 
 def predict_image(X):
     X = load_image(X, path=False)
+    X = Normaliztion(X)
     X = torch.Tensor(np.array([X]))
     print(X.shape)
     preds, scores = predict(X)
     return preds, scores
 
 def infer(batch_paths):
-    X = [load_image(tmp) for tmp in batch_paths]
+    X = [transform(load_image(tmp)) for tmp in batch_paths]
     X = torch.Tensor(np.array(X))
     preds, scores = predict(X)
     return preds, scores
 
 if __name__ == "__main__":
-    data_path = 'csv/22-06/val.csv'
+    data_path = 'csv/test.csv'
     df = pd.read_csv(data_path)
     nparr = np.array(df)
     np.random.shuffle(nparr)
@@ -57,11 +61,11 @@ if __name__ == "__main__":
         for path, label in tqdm(zip(df['image'], df['label']), total=len(df['image'])):
             cnt += 1
             batch.append(path)
-            batch_label.append(0 if label == 'real' else 1)
-            if len(batch) == 16:
+            batch_label.append(int(label))
+            if len(batch) == 16 or cnt == len(df['image']):
                 preds, scores = infer(batch)
                 for path, pred, label, score in zip(batch, preds, batch_label, scores):
-                    f.write(f'{path} {pred} {label} {score}\n')
+                    f.write(f'{path} {pred} {label} {list(score)}\n')
 
                 total += sum([tmp1 == tmp2 for tmp1, tmp2 in zip(preds, batch_label)])
 
