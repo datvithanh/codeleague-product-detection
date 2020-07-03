@@ -26,19 +26,9 @@ parser.add_argument('--data_path', required=True, type=str)
 parser.add_argument('--pretrained', action='store_false', default=True)
 parser.add_argument('--load', default='', type=str)
 parser.add_argument('--name', default='', type=str)
+parser.add_argument('--start', type=int, default=0)
 
 params = parser.parse_args()
-
-
-# class Params():
-#     def __init__(self):
-#         self.data_path = '22-06'
-#         self.name = '22-06-aug'
-#         self.pretrained = True
-#         self.load = 'ckpt/22-06-aug/model_epoch4'
-#         self.start = 5
-
-# params = Params()
 
 data_dir = params.data_path
 
@@ -57,13 +47,13 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 os.makedirs(os.path.join('ckpt', params.name), exist_ok=True)
 ckpt_dir = os.path.join('ckpt', params.name)
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler, num_epochs=25, start=0):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
 
-    for epoch in range(num_epochs):
+    for epoch in range(start, num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
@@ -145,7 +135,14 @@ print(params.pretrained)
 
 # if params.load == '':
 # model_ft = models.resnet101(pretrained=params.pretrained)
-model_ft = EfficientNet.from_pretrained('efficientnet-b5', num_classes=42) 
+if params.load == '':
+    model_ft = EfficientNet.from_pretrained('efficientnet-b5', num_classes=42) 
+else:
+    model_ft = torch.load(params.load)
+
+#print(model_ft)
+for parameter in model_ft.parameters():
+    print(parameter.requires_grad)
 
 # model_ft = models.resnet101(pretrained=params.pretrained)
 # else:
@@ -175,4 +172,5 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 #
 
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=50)
+                       num_epochs=50, start=params.start)
+

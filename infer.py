@@ -14,6 +14,7 @@ device = torch.device('cpu')
 
 #model_path = 'ckpt/22-06/model_epoch17'
 model_path = 'ckpt/22-06-aug/model_epoch24_0.777'
+model_path = 'ckpt/22-06-enet/model_epoch4_0.7589'
 
 if device.type == 'cpu':
     model = torch.load(model_path, map_location='cpu')
