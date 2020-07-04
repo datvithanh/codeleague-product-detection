@@ -42,7 +42,7 @@ dataloaders = {x: LoadDataset(x, data_dir, batch_size=10, n_jobs=6) for x in ['t
 os.makedirs(os.path.join('log', params.name), exist_ok=True)
 logger = SummaryWriter(os.path.join('log', params.name))
 
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 os.makedirs(os.path.join('ckpt', params.name), exist_ok=True)
 ckpt_dir = os.path.join('ckpt', params.name)

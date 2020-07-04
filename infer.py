@@ -16,6 +16,7 @@ device = torch.device('cuda:2') if torch.cuda.is_available() else torch.device('
 model_path = 'ckpt/22-06-aug/model_epoch24_0.777'
 model_path = 'ckpt/22-06-enet/model_epoch4_0.7589'
 model_path = 'ckpt/22-06/model_epoch8_0.7619'
+model_path = 'ckpt/03-07/model_epoch7_0.7631'
 
 if device.type == 'cpu':
     model = torch.load(model_path, map_location='cpu')
