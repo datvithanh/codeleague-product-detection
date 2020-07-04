@@ -37,12 +37,12 @@ if params.name == '':
     if params.name == '':
         params.name = data_dir.split('/')[-2]
 
-dataloaders = {x: LoadDataset(x, data_dir, batch_size=6) for x in ['train', 'val']}
+dataloaders = {x: LoadDataset(x, data_dir, batch_size=10, n_jobs=6) for x in ['train', 'val']}
 
 os.makedirs(os.path.join('log', params.name), exist_ok=True)
 logger = SummaryWriter(os.path.join('log', params.name))
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 
 os.makedirs(os.path.join('ckpt', params.name), exist_ok=True)
 ckpt_dir = os.path.join('ckpt', params.name)
@@ -136,13 +136,11 @@ print(params.pretrained)
 # if params.load == '':
 # model_ft = models.resnet101(pretrained=params.pretrained)
 if params.load == '':
-    model_ft = EfficientNet.from_pretrained('efficientnet-b5', num_classes=42) 
+    model_ft = EfficientNet.from_pretrained('efficientnet-b6', num_classes=42) 
 else:
     model_ft = torch.load(params.load)
 
 #print(model_ft)
-for parameter in model_ft.parameters():
-    print(parameter.requires_grad)
 
 # model_ft = models.resnet101(pretrained=params.pretrained)
 # else:
@@ -158,7 +156,7 @@ model_ft = model_ft.to(device)
 criterion = nn.CrossEntropyLoss()
 
 # Observe that all parameters are being optimized
-optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.0001, momentum=0.9)
+optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
 # Decay LR by a factor of 0.1 every 7 epochs
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)

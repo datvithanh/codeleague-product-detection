@@ -8,18 +8,19 @@ from dataset import LoadDataset
 from utils import load_image, Normaliztion
 
 
-#device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu') 
+device = torch.device('cuda:2') if torch.cuda.is_available() else torch.device('cpu') 
 
-device = torch.device('cpu')
+#device = torch.device('cpu')
 
 #model_path = 'ckpt/22-06/model_epoch17'
 model_path = 'ckpt/22-06-aug/model_epoch24_0.777'
 model_path = 'ckpt/22-06-enet/model_epoch4_0.7589'
+model_path = 'ckpt/22-06/model_epoch8_0.7619'
 
 if device.type == 'cpu':
     model = torch.load(model_path, map_location='cpu')
 else:
-    model = torch.load(model_path)
+    model = torch.load(model_path).to(device)
 
 transform = transforms.Compose([Normaliztion()])
 
@@ -35,16 +36,15 @@ def predict(X):
     return preds.tolist(), softmax(np.array(outputs.tolist()))
 
 def predict_image(X):
-    X = load_image(X, path=False)
+    X = load_image(X)
     X = Normaliztion(X)
     X = torch.Tensor(np.array([X]))
-    print(X.shape)
     preds, scores = predict(X)
     return preds, scores
 
 def infer(batch_paths):
-    X = [transform(load_image(tmp)) for tmp in batch_paths]
-    X = torch.Tensor(np.array(X))
+    X = [transform(load_image(tmp)).copy() for tmp in batch_paths]
+    X = torch.Tensor(np.array(X)).to(device)
     preds, scores = predict(X)
     return preds, scores
 
@@ -61,9 +61,9 @@ if __name__ == "__main__":
     with open(f'{filename}_prediction.txt', 'w+') as f:
         for path, label in tqdm(zip(df['image'], df['label']), total=len(df['image'])):
             cnt += 1
-            batch.append(path)
+            batch.append(path.replace('/home/datvt/hust/shopee-codeleague/test/test', '/home2/htthanh/DatVT/code-league/test'))
             batch_label.append(int(label))
-            if len(batch) == 16 or cnt == len(df['image']):
+            if len(batch) == 10 or cnt == len(df['image']):
                 preds, scores = infer(batch)
                 for path, pred, label, score in zip(batch, preds, batch_label, scores):
                     f.write(f'{path} {pred} {label} {list(score)}\n')

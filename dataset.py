@@ -22,7 +22,7 @@ class TrainingDataset(Dataset):
         self.transform = transform
 
     def __getitem__(self, index):
-        x = load_image(self.X[index])#.replace('/home/datvt/hust/shopee-codeleague/train', '/content/train/train'))
+        x = load_image(self.X[index].replace('/home/datvt/hust/shopee-codeleague/train', '/home2/htthanh/DatVT/code-league/train'))
         y = int(self.Y[index])
 
         x = self.transform(x)
